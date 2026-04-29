@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Royal Crown PRO</title>
+<style>
+body { background:#0a0a0a; color:white; font-family:Arial; text-align:center; }
+h1 { color:gold; }
+#bani, #jackpot { margin:10px; font-size:20px; }
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(5, 80px);
+  gap:10px;
+  justify-content:center;
+  margin:20px;
+}
+
+.cell {
+  width:80px; height:80px;
+  background:#1a1a1a;
+  border:2px solid gold;
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:32px;
+  box-shadow:0 0 10px gold;
+}
+
+button {
+  padding:15px 30px;
+  font-size:18px;
+  background:gold;
+  border:none;
+  border-radius:10px;
+  margin:5px;
+}
+
+.win { animation: flash 0.3s alternate 6; }
+@keyframes flash {
+  from { box-shadow:0 0 10px gold; }
+  to { box-shadow:0 0 30px white; }
+}
+
+</style>
+</head>
+<body>
+
+<h1>👑 Royal Crown PRO</h1>
+<div id="bani">Bani: 100</div>
+<div id="jackpot">Jackpot: 500</div>
+
+<div class="grid" id="grid"></div>
+
+<button onclick="spin()">SPIN</button>
+<button onclick="autoSpin()">AUTO x10</button>
+
+<p id="mesaj"></p>
+
+<script>
+let bani = 100;
+let jackpot = 500;
+let freeSpins = 0;
+
+const simboluri = ["👑","A","K","Q","J","10"];
+const special = "⭐"; // scatter
+const wild = "💎";
+
+const grid = document.getElementById("grid");
+
+function init(){
+  for(let i=0;i<15;i++){
+    let d=document.createElement("div");
+    d.className="cell";
+    d.innerText="?";
+    grid.appendChild(d);
+  }
+}
+
+function rand(){
+  let chance=Math.random();
+  if(chance<0.1) return special;
+  if(chance<0.2) return wild;
+  return simboluri[Math.floor(Math.random()*simboluri.length)];
+}
+
+function spin(){
+  let bet=10;
+
+  if(freeSpins>0){
+    freeSpins--;
+    mesaj.innerText="FREE SPIN!";
+  } else {
+    if(bani<bet){ alert("Fără bani"); return; }
+    bani-=bet;
+    jackpot+=2;
+  }
+
+  updateUI();
+
+  let cells=document.querySelectorAll(".cell");
+
+  cells.forEach((c,i)=>{
+    setTimeout(()=>{
+      c.innerText=rand();
+    }, i*80);
+  });
+
+  setTimeout(()=>checkWin(),1500);
+}
+
+function checkWin(){
+  let cells=document.querySelectorAll(".cell");
+  let win=0;
+  let scatterCount=0;
+
+  for(let i=0;i<cells.length;i++){
+    if(cells[i].innerText===special) scatterCount++;
+  }
+
+  if(scatterCount>=3){
+    freeSpins+=5;
+    mesaj.innerText="FREE SPINS +5";
+  }
+
+  // 3 linii
+  for(let r=0;r<3;r++){
+    let row=[cells[r*5],cells[r*5+1],cells[r*5+2],cells[r*5+3],cells[r*5+4]];
+
+    let base=row[0].innerText;
+    let match=row.every(c=>c.innerText===base || c.innerText===wild);
+
+    if(match){
+      win+=50;
+      row.forEach(c=>c.classList.add("win"));
+    }
+  }
+
+  if(win>0){
+    bani+=win;
+    mesaj.innerText="WIN +"+win;
+  }
+
+  // jackpot random
+  if(Math.random()<0.02){
+    bani+=jackpot;
+    mesaj.innerText="JACKPOT!!! +"+jackpot;
+    jackpot=500;
+  }
+
+  updateUI();
+
+  setTimeout(()=>{
+    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('win'));
+  },1000);
+}
+
+function autoSpin(){
+  let i=0;
+  let interval=setInterval(()=>{
+    spin();
+    i++;
+    if(i>=10) clearInterval(interval);
+  },2000);
+}
+
+function updateUI(){
+  document.getElementById("bani").innerText="Bani: "+bani;
+  document.getElementById("jackpot").innerText="Jackpot: "+jackpot;
+}
+
+init();
+</script>
+
+</body>
+</html>
